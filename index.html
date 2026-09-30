@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#7467f5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tone Writer">
+<title>Mandarin Tone Writer</title>
+<style>
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+#app { min-height: 100vh; background-color: light-dark(#f7f7fb, #121318); color: light-dark(#20212a, #f2f3f7); padding: 28px; }
+.shell { max-width: 900px; margin: 0 auto; }
+.header { display:flex; justify-content:space-between; gap:20px; align-items:flex-start; margin-bottom:22px; }
+h1 { margin:0 0 6px; font-size:32px; letter-spacing:-.03em; }
+.subtitle { margin:0; color: light-dark(#686b78,#aeb1bd); }
+.card { background: light-dark(#fff,#1b1d24); border:1px solid light-dark(#e3e4eb,#30333d); border-radius:18px; padding:22px; box-shadow: 0 8px 30px rgba(0,0,0,.06); }
+.toolbar { display:flex; flex-wrap:wrap; gap:9px; align-items:center; margin-bottom:14px; }
+button { border:1px solid light-dark(#d9dae2,#383b46); background:light-dark(#f7f7fa,#242731); color:inherit; border-radius:10px; padding:8px 12px; cursor:pointer; font:inherit; }
+button:hover { background:light-dark(#eeeef4,#2c2f3a); }
+#editor { width:100%; min-height:250px; border:2px solid light-dark(#dfe1e8,#363945); border-radius:14px; padding:18px; font-size:30px; line-height:1.65; outline:none; background:light-dark(#fff,#15171d); }
+#editor:focus { border-color:#7c6cff; }
+#editor:empty:before { content: attr(data-placeholder); color: light-dark(#aaaeba,#707481); pointer-events:none; }
+.legend { display:flex; flex-wrap:wrap; gap:12px 20px; margin:17px 0 4px; color:light-dark(#565967,#c0c2cc); font-size:14px; }
+.dot { display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:6px; }
+.tone1 { color:#2878e8; } .tone2 { color:#1c9a55; } .tone3 { color:#8b55d9; } .tone4 { color:#df3d3d; } .neutral { color:light-dark(#6d707c,#a5a8b3); }
+.dot.tone1 { background:#2878e8; } .dot.tone2 { background:#1c9a55; } .dot.tone3 { background:#8b55d9; } .dot.tone4 { background:#df3d3d; } .dot.neutral { background:#888b96; }
+.info { margin-top:18px; padding:14px 16px; background:light-dark(#f5f5f9,#20222b); border-radius:12px; font-size:14px; line-height:1.55; color:light-dark(#5e616e,#b9bbc5); }
+.pinyin { min-height:24px; margin-top:10px; font-size:18px; color:light-dark(#5e616e,#b9bbc5); }
+.status { margin-left:auto; font-size:13px; color:light-dark(#777a87,#9da0ad); }
+@media(max-width:650px){ #app{padding:16px} h1{font-size:26px} #editor{font-size:24px} .status{width:100%; margin-left:0} }
+</style>
+</head>
+<body>
+<div id="app">
+<div class="shell">
+<div class="header"><div><h1>Mandarin Tone Writer</h1><p class="subtitle">Type Hanzi and see Mandarin tones instantly.</p></div></div>
+  <div class="card">
+    <div class="toolbar">
+      <button id="copy">Copy text</button><button id="clear">Clear</button><button id="plain">Toggle colors</button><button id="install" hidden>Install app</button><span class="status" id="status">0 characters</span>
+    </div>
+    <div id="editor" contenteditable="true" spellcheck="false" data-placeholder="Type Chinese here… 例如：我喜欢学习中文。"></div>
+    <div class="pinyin" id="pinyin"></div>
+    <div class="legend">
+      <span><i class="dot tone1"></i>1st tone</span><span><i class="dot tone2"></i>2nd tone</span><span><i class="dot tone3"></i>3rd tone</span><span><i class="dot tone4"></i>4th tone</span><span><i class="dot neutral"></i>neutral / unknown</span>
+    </div>
+    <div class="settings"><label>Font size</label><input id="size" type="range" min="20" max="48" value="30"><button id="save">Save note</button><button id="restore">Restore note</button></div>
+    <div class="info"><b>Dictionary:</b> <span id="dictionaryStatus">Loading comprehensive dictionary…</span> Hover over a Hanzi to see its detected pinyin. Your draft and settings are saved locally on this device.</div>
+  </div>
+</div>
+</div>
+<script>
+// Broad word-level pronunciation data. The site loads CC-CEDICT in the browser,
+// which provides a much wider vocabulary than the original HSK-focused list.
+// Pinyin tone numbers are used internally. A compact fallback keeps basic words working offline.
+const dict = {'我':'wo3','你':'ni3','他':'ta1','她':'ta1','它':'ta1','们':'men5','是':'shi4','不':'bu4','也':'ye3','很':'hen3','好':'hao3','吗':'ma5','呢':'ne5','啊':'a5','喜':'xi3','欢':'huan1','学':'xue2','习':'xi2','中':'zhong1','文':'wen2','说':'shuo1','听':'ting1','看':'kan4','读':'du2','写':'xie3','吃':'chi1','喝':'he1','水':'shui3','饭':'fan4','菜':'cai4','苹':'ping2','果':'guo3','葡':'pu2','萄':'tao2','家':'jia1','校':'xiao4','书':'shu1','店':'dian4','图':'tu2','馆':'guan3','今':'jin1','天':'tian1','昨':'zuo2','明':'ming2','早':'zao3','上':'shang4','午':'wu3','晚':'wan3','时':'shi2','候':'hou4','点':'dian3','去':'qu4','来':'lai2','在':'zai4','从':'cong2','到':'dao4','跟':'gen1','和':'he2','一':'yi1','起':'qi3','朋':'peng2','友':'you3','妈':'ma1','哥':'ge1','姐':'jie3','妹':'mei4','人':'ren2','新':'xin1','住':'zhu4','班':'ban1','工':'gong1','作':'zuo4','公':'gong1','司':'si1','宿':'su4','舍':'she4','房':'fang2','间':'jian1','手':'shou3','机':'ji1','买':'mai3','钱':'qian2','爱':'ai4','想':'xiang3','要':'yao4','会':'hui4','可':'ke3','以':'yi3','用':'yong4','给':'gei3','送':'song4','等':'deng3','知':'zhi1','道':'dao4','什':'shen2','么':'me5','哪':'na3','儿':'er2','这':'zhe4','里':'li3','那':'na4','边':'bian1','累':'lei4','冷':'leng3','热':'re4','漂':'piao4','亮':'liang4','大':'da4','小':'xiao3','多':'duo1','少':'shao3','慢':'man4','快':'kuai4','高':'gao1','强':'qiang2','帅':'shuai4','酷':'ku4','北':'bei3','京':'jing1','海':'hai3','路':'lu4','商':'shang1','场':'chang3','南':'nan2','动':'dong4','物':'wu4','园':'yuan2','自':'zi4','然':'ran2','历':'li4','史':'shi3','科':'ke1','技':'ji4','跑':'pao3','步':'bu4','打':'da3','篮':'lan2','球':'qiu2','骑':'qi2','马':'ma3','走':'zou3','坐':'zuo4','睡':'shui4','画':'hua4','音':'yin1','乐':'le4','聊':'liao2','转':'zhuan3','发':'fa1','课':'ke4','周':'zhou1','末':'mo4','平':'ping2','常':'chang2','电':'dian4','脑':'nao3','飞':'fei1','机':'ji1','行':'xing2','员':'yuan2','开':'kai1','保':'bao3','护':'hu4','弟':'di4','有':'you3','没':'mei2','五':'wu3','三':'san1','两':'liang3','十':'shi2','几':'ji3','号':'hao4','名':'ming2','字':'zi4','生':'sheng1','日':'ri4','婚':'hun1','礼':'li3'};
+const phrases = {'我喜欢':'wo3 xi3 huan1','学习中文':'xue2 xi2 zhong1 wen2','图书馆':'tu2 shu1 guan3','今天':'jin1 tian1','昨天':'zuo2 tian1','明天':'ming2 tian1','朋友':'peng2 you3','苹果':'ping2 guo3','葡萄':'pu2 tao2','商场':'shang1 chang3','南京路':'nan2 jing1 lu4','一起':'yi1 qi3','怎么':'zen3 me5','什么':'shen2 me5','哪里':'na3 li3','哪儿':'na3 er2','可以':'ke3 yi3','喜欢':'xi3 huan1','爱好':'ai4 hao4','生日':'sheng1 ri4','什么时候':'shen2 me5 shi2 hou4','婚礼':'hun1 li3','给我':'gei3 wo3','在家':'zai4 jia1','上班':'shang4 ban1','工作':'gong1 zuo4','吃饭':'chi1 fan4','喝水':'he1 shui3','走路':'zou3 lu4','打篮球':'da3 lan2 qiu2','跑步':'pao3 bu4'};
+const CEDICT_URL='https://raw.githubusercontent.com/rhcarvalho/cedict/master/cedict_1_0_ts_utf-8_mdbg.txt';
+let wordDict=new Map(Object.entries(phrases)), dictionaryStatus='Loading comprehensive dictionary…';
+const charDict={};
+function addCedictLine(line){
+  const m=line.match(/^([^\s]+) ([^\s]+) \[([^\]]+)\]/); if(!m)return;
+  const word=m[2], py=m[3].replace(/u:/g,'ü').trim();
+  if(/[\u3400-\u9fff]/.test(word)&&py){
+    wordDict.set(word,py);
+    const chars=[...word], syllables=py.split(/\s+/);
+    chars.forEach((ch,i)=>{if(/[\u3400-\u9fff]/.test(ch)&&syllables[i]&&!charDict[ch])charDict[ch]=syllables[i]});
+  }
+}
+async function loadComprehensiveDictionary(){
+  try{
+    const cached=localStorage.getItem('toneWriterCedict');
+    if(cached){JSON.parse(cached).forEach(([w,p])=>addCedictLine(`${w} ${w} [${p}]`));dictionaryStatus='Comprehensive dictionary loaded from this device.';render();}
+    const response=await fetch(CEDICT_URL,{cache:'no-store'}); if(!response.ok)throw new Error('Dictionary request failed');
+    const text=await response.text(); const entries=[];
+    for(const line of text.split('\n')){const before=wordDict.size;addCedictLine(line);if(wordDict.size>before){const last=[...wordDict.entries()].pop();entries.push(last)}}
+    try{localStorage.setItem('toneWriterCedict',JSON.stringify(entries))}catch(e){}
+    dictionaryStatus=`Comprehensive dictionary loaded (${wordDict.size.toLocaleString()} words).`;render();
+  }catch(e){dictionaryStatus='Using built-in dictionary; online dictionary unavailable.';render()}
+}
+loadComprehensiveDictionary();
+const editor=document.getElementById('editor'), pinyin=document.getElementById('pinyin'), status=document.getElementById('status');
+function isHan(c){return /[\u3400-\u9fff]/.test(c)}
+function toneClass(py){let m=py&&py.match(/[1-4]/); return m?'tone'+m[0]:'neutral'}
+function toneForChar(c, text, i){
+  // Prefer the longest dictionary word beginning at this position. This resolves
+  // many polyphonic characters from their surrounding word instead of guessing
+  // from the character alone.
+  let best=null;
+  for(const [word,py] of wordDict){if(word.length>1&&text.startsWith(word,i)&&(!best||word.length>best.word.length))best={word,py}}
+  if(best)return best.py.split(/\s+/);
+  const py=dict[c]||charDict[c]; return py?[py]:null;
+}
+function escape(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function render(){
+  const text=editor.innerText.replace(/\n/g,'');
+  let html='', pys=[];
+  for(let i=0;i<text.length;){
+    const found=toneForChar(text[i],text,i);
+    if(found && found.length>1){
+      for(let j=0;j<found.length;j++){const ch=text[i+j]; html+=`<span class="${toneClass(found[j])}" title="${escape(found[j])}">${escape(ch)}</span>`; pys.push(found[j]);}
+      i+=found.length;
+    } else {
+      const c=text[i], py=found?found[0]:null;
+      html+=isHan(c)?`<span class="${toneClass(py)}" title="${py?escape(py):'unknown pronunciation'}">${escape(c)}</span>`:escape(c);
+      if(py)pys.push(py); i++;
+    }
+  }
+  // Preserve caret approximately by replacing only when not actively composing.
+  const sel=window.getSelection(); const active=document.activeElement===editor;
+  if(active){
+    const range=sel.rangeCount?sel.getRangeAt(0):null; const offset=range?range.startOffset:0;
+    editor.innerHTML=html; const r=document.createRange(); r.selectNodeContents(editor); r.collapse(false); sel.removeAllRanges(); sel.addRange(r);
+  } else editor.innerHTML=html;
+  pinyin.textContent=pys.join('   '); status.textContent=`${[...text].length} character${[...text].length===1?'':'s'}`;
+}
+function render(){
+  const text=editor.innerText.replace(/\n/g,'');
+  let html='',pys=[];
+  for(let i=0;i<text.length;){
+    const found=toneForChar(text[i],text,i);
+    if(found&&found.length>1){
+      for(let j=0;j<found.length;j++){const ch=text[i+j];html+='<span class="'+toneClass(found[j])+'" title="'+escape(found[j])+'">'+escape(ch)+'</span>';pys.push(found[j])}
+      i+=found.length;
+    }else{
+      const c=text[i],py=found?found[0]:null;
+      html+=isHan(c)?'<span class="'+toneClass(py)+'" title="'+(py?escape(py):'unknown pronunciation')+'">'+escape(c)+'</span>':escape(c);
+      if(py)pys.push(py);i++;
+    }
+  }
+  const sel=window.getSelection(),active=document.activeElement===editor;let caret=0;
+  if(active&&sel.rangeCount){const range=sel.getRangeAt(0),before=range.cloneRange();before.selectNodeContents(editor);before.setEnd(range.startContainer,range.startOffset);caret=before.toString().length}
+  editor.innerHTML=html;
+  if(active){const walker=document.createTreeWalker(editor,NodeFilter.SHOW_TEXT);let node,seen=0;while(node=walker.nextNode()){if(seen+node.nodeValue.length>=caret){const r=document.createRange();r.setStart(node,Math.max(0,caret-seen));r.collapse(true);sel.removeAllRanges();sel.addRange(r);break}seen+=node.nodeValue.length}}
+  pinyin.textContent=pys.join('   ');status.textContent=[...text].length+' character'+([...text].length===1?'':'s');
+}
+let composing=false;
+editor.addEventListener('compositionstart',()=>composing=true);
+editor.addEventListener('compositionend',()=>{composing=false; render()});
+editor.addEventListener('input',()=>{if(!composing){localStorage.setItem('toneWriterDraft',editor.innerText);render()}});
+document.getElementById('clear').onclick=()=>{editor.innerHTML='';localStorage.removeItem('toneWriterDraft');editor.focus();render()};
+document.getElementById('copy').onclick=async()=>{await navigator.clipboard?.writeText(editor.innerText);alert('Plain text copied to your clipboard.')};
+document.getElementById('plain').onclick=()=>{const spans=editor.querySelectorAll('span');const colored=spans.length&&spans[0].className!=='neutral';spans.forEach(s=>s.className=colored?'neutral':toneClass(s.title))};
+document.getElementById('save').onclick=()=>{localStorage.setItem('toneWriterSaved',editor.innerText);alert('Note saved on this device.')};
+document.getElementById('restore').onclick=()=>{editor.textContent=localStorage.getItem('toneWriterSaved')||'';render()};
+document.getElementById('size').oninput=e=>{editor.style.fontSize=e.target.value+'px';localStorage.setItem('toneWriterSize',e.target.value)};
+const draft=localStorage.getItem('toneWriterDraft');if(draft)editor.textContent=draft;
+const savedSize=localStorage.getItem('toneWriterSize');if(savedSize){document.getElementById('size').value=savedSize;editor.style.fontSize=savedSize+'px'}render();
+let deferredPrompt;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('install').hidden=false});
+document.getElementById('install').onclick=async()=>{if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;document.getElementById('install').hidden=true}};
+const manifest={name:'Mandarin Tone Writer',short_name:'Tone Writer',start_url:'.',display:'standalone',background_color:'#f7f7fb',theme_color:'#7467f5'};const link=document.createElement('link');link.rel='manifest';link.href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify(manifest));document.head.appendChild(link);
+</script>
+</body>
+</html>
