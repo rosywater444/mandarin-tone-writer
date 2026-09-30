@@ -26,90 +26,303 @@ button:hover { background:light-dark(#eeeef4,#2c2f3a); }
 #editor:empty:before { content: attr(data-placeholder); color: light-dark(#aaaeba,#707481); pointer-events:none; }
 .legend { display:flex; flex-wrap:wrap; gap:12px 20px; margin:17px 0 4px; color:light-dark(#565967,#c0c2cc); font-size:14px; }
 .dot { display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:6px; }
-.tone1 { color:#2878e8; } .tone2 { color:#1c9a55; } .tone3 { color:#8b55d9; } .tone4 { color:#df3d3d; } .neutral { color:light-dark(#6d707c,#a5a8b3); }
-.dot.tone1 { background:#2878e8; } .dot.tone2 { background:#1c9a55; } .dot.tone3 { background:#8b55d9; } .dot.tone4 { background:#df3d3d; } .dot.neutral { background:#888b96; }
-.info { margin-top:18px; padding:14px 16px; background:light-dark(#f5f5f9,#20222b); border-radius:12px; font-size:14px; line-height:1.55; color:light-dark(#5e616e,#b9bbc5); }
-.pinyin { min-height:24px; margin-top:10px; font-size:18px; color:light-dark(#5e616e,#b9bbc5); display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.tone1 { color:#2878e8; }
+.tone2 { color:#1c9a55; }
+.tone3 { color:#8b55d9; }
+.tone4 { color:#df3d3d; }
+.neutral { color:light-dark(#6d707c,#a5a8b3); }
+
+#editor.no-colors .tone1,
+#editor.no-colors .tone2,
+#editor.no-colors .tone3,
+#editor.no-colors .tone4 {
+  color:light-dark(#6d707c,#a5a8b3);
+}
+
+.dot.tone1 { background:#2878e8; }
+.dot.tone2 { background:#1c9a55; }
+.dot.tone3 { background:#8b55d9; }
+.dot.tone4 { background:#df3d3d; }
+.dot.neutral { background:#888b96; }
+
+.info {
+  margin-top:18px;
+  padding:14px 16px;
+  background:light-dark(#f5f5f9,#20222b);
+  border-radius:12px;
+  font-size:14px;
+  line-height:1.55;
+  color:light-dark(#5e616e,#b9bbc5);
+}
+
+.pinyin {
+  min-height:24px;
+  margin-top:10px;
+  font-size:18px;
+  color:light-dark(#5e616e,#b9bbc5);
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+}
+
 .pinyin span { white-space:nowrap; }
+
 .word-hover { cursor:help; }
-.word-hover:hover { background:light-dark(#eeeeff,#303044); border-radius:4px; }
-.translation { min-height:24px; margin-top:8px; padding:10px 12px; border-radius:10px; background:light-dark(#f5f5f9,#20222b); color:light-dark(#5e616e,#b9bbc5); font-size:16px; line-height:1.5; }
-.status { margin-left:auto; font-size:13px; color:light-dark(#777a87,#9da0ad); }
-@media(max-width:650px){ #app{padding:16px} h1{font-size:26px} #editor{font-size:24px} .status{width:100%; margin-left:0} }
+
+.word-hover:hover {
+  background:light-dark(#eeeeff,#303044);
+  border-radius:4px;
+}
+
+.translation {
+  min-height:24px;
+  margin-top:8px;
+  padding:10px 12px;
+  border-radius:10px;
+  background:light-dark(#f5f5f9,#20222b);
+  color:light-dark(#5e616e,#b9bbc5);
+  font-size:16px;
+  line-height:1.5;
+}
+
+.status {
+  margin-left:auto;
+  font-size:13px;
+  color:light-dark(#777a87,#9da0ad);
+}
+
+@media(max-width:650px){
+  #app { padding:16px; }
+  h1 { font-size:26px; }
+  #editor { font-size:24px; }
+  .status { width:100%; margin-left:0; }
+}
 </style>
 </head>
+
 <body>
 <div id="app">
 <div class="shell">
-<div class="header"><div><h1>Mandarin Tone Writer</h1><p class="subtitle">Type Hanzi and see Mandarin tones instantly.</p></div></div>
-  <div class="card">
-    <div class="toolbar">
-      <button id="copy">Copy text</button><button id="clear">Clear</button><button id="plain">Toggle colors</button><button id="translate">Translate to English</button><button id="install" hidden>Install app</button><span class="status" id="status">0 characters</span>
-    </div>
-    <div id="editor" contenteditable="true" spellcheck="false" data-placeholder="Type Chinese here… 例如：我喜欢学习中文。"></div>
-    <div class="pinyin" id="pinyin"></div>
-    <div class="translation" id="translation" hidden></div>
-    <div class="legend">
-      <span><i class="dot tone1"></i>1st tone</span><span><i class="dot tone2"></i>2nd tone</span><span><i class="dot tone3"></i>3rd tone</span><span><i class="dot tone4"></i>4th tone</span><span><i class="dot neutral"></i>neutral / unknown</span>
-    </div>
-    <div class="settings"><label>Font size</label><input id="size" type="range" min="20" max="48" value="30"><button id="save">Save note</button><button id="restore">Restore note</button></div>
-    <div class="info"><b>Dictionary:</b> <span id="dictionaryStatus">Loading comprehensive dictionary…</span> Hover over Hanzi or words to see pronunciation and meaning. Your draft and settings are saved locally on this device.</div>
+
+<div class="header">
+  <div>
+    <h1>Mandarin Tone Writer</h1>
+    <p class="subtitle">Type Hanzi and see Mandarin tones instantly.</p>
   </div>
 </div>
-</div>
-<script>
-// Broad word-level pronunciation data. The site loads CC-CEDICT in the browser,
-// which provides a much wider vocabulary than the original HSK-focused list.
-// Pinyin tone numbers are used internally. A compact fallback keeps basic words working offline.
-const dict = {'我':'wo3','你':'ni3','他':'ta1','她':'ta1','它':'ta1','们':'men5','是':'shi4','不':'bu4','也':'ye3','很':'hen3','好':'hao3','吗':'ma5','呢':'ne5','啊':'a5','喜':'xi3','欢':'huan1','学':'xue2','习':'xi2','中':'zhong1','文':'wen2','说':'shuo1','听':'ting1','看':'kan4','读':'du2','写':'xie3','吃':'chi1','喝':'he1','水':'shui3','饭':'fan4','菜':'cai4','苹':'ping2','果':'guo3','葡':'pu2','萄':'tao2','家':'jia1','校':'xiao4','书':'shu1','店':'dian4','图':'tu2','馆':'guan3','今':'jin1','天':'tian1','昨':'zuo2','明':'ming2','早':'zao3','上':'shang4','午':'wu3','晚':'wan3','时':'shi2','候':'hou4','点':'dian3','去':'qu4','来':'lai2','在':'zai4','从':'cong2','到':'dao4','跟':'gen1','和':'he2','一':'yi1','起':'qi3','朋':'peng2','友':'you3','妈':'ma1','哥':'ge1','姐':'jie3','妹':'mei4','人':'ren2','新':'xin1','住':'zhu4','班':'ban1','工':'gong1','作':'zuo4','公':'gong1','司':'si1','宿':'su4','舍':'she4','房':'fang2','间':'jian1','手':'shou3','机':'ji1','买':'mai3','钱':'qian2','爱':'ai4','想':'xiang3','要':'yao4','会':'hui4','可':'ke3','以':'yi3','用':'yong4','给':'gei3','送':'song4','等':'deng3','知':'zhi1','道':'dao4','什':'shen2','么':'me5','哪':'na3','儿':'er2','这':'zhe4','里':'li3','那':'na4','边':'bian1','累':'lei4','冷':'leng3','热':'re4','漂':'piao4','亮':'liang4','大':'da4','小':'xiao3','多':'duo1','少':'shao3','慢':'man4','快':'kuai4','高':'gao1','强':'qiang2','帅':'shuai4','酷':'ku4','北':'bei3','京':'jing1','海':'hai3','路':'lu4','商':'shang1','场':'chang3','南':'nan2','动':'dong4','物':'wu4','园':'yuan2','自':'zi4','然':'ran2','历':'li4','史':'shi3','科':'ke1','技':'ji4','跑':'pao3','步':'bu4','打':'da3','篮':'lan2','球':'qiu2','骑':'qi2','马':'ma3','走':'zou3','坐':'zuo4','睡':'shui4','画':'hua4','音':'yin1','乐':'le4','聊':'liao2','转':'zhuan3','发':'fa1','课':'ke4','周':'zhou1','末':'mo4','平':'ping2','常':'chang2','电':'dian4','脑':'nao3','飞':'fei1','机':'ji1','行':'xing2','员':'yuan2','开':'kai1','保':'bao3','护':'hu4','弟':'di4','有':'you3','没':'mei2','五':'wu3','三':'san1','两':'liang3','十':'shi2','几':'ji3','号':'hao4','名':'ming2','字':'zi4','生':'sheng1','日':'ri4','婚':'hun1','礼':'li3'};
-const phrases = {'我喜欢':'wo3 xi3 huan1','学习中文':'xue2 xi2 zhong1 wen2','图书馆':'tu2 shu1 guan3','今天':'jin1 tian1','昨天':'zuo2 tian1','明天':'ming2 tian1','朋友':'peng2 you3','苹果':'ping2 guo3','葡萄':'pu2 tao2','商场':'shang1 chang3','南京路':'nan2 jing1 lu4','一起':'yi1 qi3','怎么':'zen3 me5','什么':'shen2 me5','哪里':'na3 li3','哪儿':'na3 er2','可以':'ke3 yi3','喜欢':'xi3 huan1','爱好':'ai4 hao4','生日':'sheng1 ri4','什么时候':'shen2 me5 shi2 hou4','婚礼':'hun1 li3','给我':'gei3 wo3','在家':'zai4 jia1','上班':'shang4 ban1','工作':'gong1 zuo4','吃饭':'chi1 fan4','喝水':'he1 shui3','走路':'zou3 lu4','打篮球':'da3 lan2 qiu2','跑步':'pao3 bu4'};
-const CEDICT_URL='https://raw.githubusercontent.com/rhcarvalho/cedict/master/cedict_1_0_ts_utf-8_mdbg.txt';
-let wordDict=new Map(Object.entries(phrases)), wordMeanings=new Map(), wordTrie={}, dictionaryStatus='Loading comprehensive dictionary…';
-const charDict={};
 
-function indexWord(word,py,meaning=''){
-  let node=wordTrie;
-  for(const ch of word){node=node[ch]||(node[ch]={})}
-  node.$=[...py.split(/\s+/)];
-  if(meaning)node.$$=meaning
+<div class="card">
+
+<div class="toolbar">
+  <button id="copy">Copy text</button>
+  <button id="clear">Clear</button>
+  <button id="plain">Toggle colors</button>
+  <button id="translate">Translate to English</button>
+  <button id="install" hidden>Install app</button>
+  <span class="status" id="status">0 characters</span>
+</div>
+
+<div
+  id="editor"
+  contenteditable="true"
+  spellcheck="false"
+  data-placeholder="Type Chinese here… 例如：我喜欢学习中文。"
+></div>
+
+<div class="pinyin" id="pinyin"></div>
+
+<div class="translation" id="translation" hidden></div>
+
+<div class="legend">
+  <span><i class="dot tone1"></i>1st tone</span>
+  <span><i class="dot tone2"></i>2nd tone</span>
+  <span><i class="dot tone3"></i>3rd tone</span>
+  <span><i class="dot tone4"></i>4th tone</span>
+  <span><i class="dot neutral"></i>neutral / unknown</span>
+</div>
+
+<div class="settings">
+  <label>Font size</label>
+  <input id="size" type="range" min="20" max="48" value="30">
+  <button id="save">Save note</button>
+  <button id="restore">Restore note</button>
+</div>
+
+<div class="info">
+  <b>Dictionary:</b>
+  <span id="dictionaryStatus">Loading comprehensive dictionary…</span>
+  Hover over Hanzi or words to see pronunciation and meaning.
+  Your draft and settings are saved locally on this device.
+</div>
+
+</div>
+</div>
+</div>
+
+<script>
+
+const dict = {
+'我':'wo3','你':'ni3','他':'ta1','她':'ta1','它':'ta1','们':'men5',
+'是':'shi4','不':'bu4','也':'ye3','很':'hen3','好':'hao3','吗':'ma5',
+'呢':'ne5','啊':'a5','喜':'xi3','欢':'huan1','学':'xue2','习':'xi2',
+'中':'zhong1','文':'wen2','说':'shuo1','听':'ting1','看':'kan4',
+'读':'du2','写':'xie3','吃':'chi1','喝':'he1','水':'shui3','饭':'fan4',
+'菜':'cai4','苹':'ping2','果':'guo3','葡':'pu2','萄':'tao2','家':'jia1',
+'校':'xiao4','书':'shu1','店':'dian4','图':'tu2','馆':'guan3','今':'jin1',
+'天':'tian1','昨':'zuo2','明':'ming2','早':'zao3','上':'shang4',
+'午':'wu3','晚':'wan3','时':'shi2','候':'hou4','点':'dian3','去':'qu4',
+'来':'lai2','在':'zai4','从':'cong2','到':'dao4','跟':'gen1','和':'he2',
+'一':'yi1','起':'qi3','朋':'peng2','友':'you3','妈':'ma1','哥':'ge1',
+'姐':'jie3','妹':'mei4','人':'ren2','新':'xin1','住':'zhu4','班':'ban1',
+'工':'gong1','作':'zuo4','公':'gong1','司':'si1','宿':'su4','舍':'she4',
+'房':'fang2','间':'jian1','手':'shou3','机':'ji1','买':'mai3','钱':'qian2',
+'爱':'ai4','想':'xiang3','要':'yao4','会':'hui4','可':'ke3','以':'yi3',
+'用':'yong4','给':'gei3','送':'song4','等':'deng3','知':'zhi1','道':'dao4',
+'什':'shen2','么':'me5','哪':'na3','儿':'er2','这':'zhe4','里':'li3',
+'那':'na4','边':'bian1','累':'lei4','冷':'leng3','热':'re4','漂':'piao4',
+'亮':'liang4','大':'da4','小':'xiao3','多':'duo1','少':'shao3',
+'慢':'man4','快':'kuai4','高':'gao1','强':'qiang2','帅':'shuai4',
+'酷':'ku4','北':'bei3','京':'jing1','海':'hai3','路':'lu4','商':'shang1',
+'场':'chang3','南':'nan2','动':'dong4','物':'wu4','园':'yuan2',
+'自':'zi4','然':'ran2','历':'li4','史':'shi3','科':'ke1','技':'ji4',
+'跑':'pao3','步':'bu4','打':'da3','篮':'lan2','球':'qiu2','骑':'qi2',
+'马':'ma3','走':'zou3','坐':'zuo4','睡':'shui4','画':'hua4','音':'yin1',
+'乐':'le4','聊':'liao2','转':'zhuan3','发':'fa1','课':'ke4','周':'zhou1',
+'末':'mo4','平':'ping2','常':'chang2','电':'dian4','脑':'nao3','飞':'fei1',
+'机':'ji1','行':'xing2','员':'yuan2','开':'kai1','保':'bao3','护':'hu4',
+'弟':'di4','有':'you3','没':'mei2','五':'wu3','三':'san1','两':'liang3',
+'十':'shi2','几':'ji3','号':'hao4','名':'ming2','字':'zi4','生':'sheng1',
+'日':'ri4','婚':'hun1','礼':'li3'
+};
+
+const phrases = {
+'我喜欢':'wo3 xi3 huan1',
+'学习中文':'xue2 xi2 zhong1 wen2',
+'图书馆':'tu2 shu1 guan3',
+'今天':'jin1 tian1',
+'昨天':'zuo2 tian1',
+'明天':'ming2 tian1',
+'朋友':'peng2 you3',
+'苹果':'ping2 guo3',
+'葡萄':'pu2 tao2',
+'商场':'shang1 chang3',
+'南京路':'nan2 jing1 lu4',
+'一起':'yi1 qi3',
+'怎么':'zen3 me5',
+'什么':'shen2 me5',
+'哪里':'na3 li3',
+'哪儿':'na3 er2',
+'可以':'ke3 yi3',
+'喜欢':'xi3 huan1',
+'爱好':'ai4 hao4',
+'生日':'sheng1 ri4',
+'什么时候':'shen2 me5 shi2 hou4',
+'婚礼':'hun1 li3',
+'给我':'gei3 wo3',
+'在家':'zai4 jia1',
+'上班':'shang4 ban1',
+'工作':'gong1 zuo4',
+'吃饭':'chi1 fan4',
+'喝水':'he1 shui3',
+'走路':'zou3 lu4',
+'打篮球':'da3 lan2 qiu2',
+'跑步':'pao3 bu4'
+};
+
+const CEDICT_URL =
+'https://raw.githubusercontent.com/rhcarvalho/cedict/master/cedict_1_0_ts_utf-8_mdbg.txt';
+
+let wordDict = new Map(Object.entries(phrases));
+let wordMeanings = new Map();
+let wordTrie = {};
+let dictionaryStatus = 'Loading comprehensive dictionary…';
+
+const charDict = {};
+
+function indexWord(word, py, meaning=''){
+  let node = wordTrie;
+
+  for(const ch of word){
+    node = node[ch] || (node[ch] = {});
+  }
+
+  node.$ = [...py.split(/\s+/)];
+
+  if(meaning)
+    node.$$ = meaning;
 }
 
-for(const [word,py] of wordDict)indexWord(word,py);
+for(const [word,py] of wordDict)
+  indexWord(word,py);
 
 function addCedictLine(line){
-  const m=line.match(/^([^\s]+) ([^\s]+) \[([^\]]+)\] \/(.+)\/$/);
-  if(!m)return;
 
-  const word=m[2], py=m[3].replace(/u:/g,'ü').trim();
+  const m = line.match(
+    /^([^\s]+) ([^\s]+) \[([^\]]+)\] \/(.+)\/$/
+  );
 
-  if(/[\u3400-\u9fff]/.test(word)&&py){
-    const meaning=m[4].split('/').filter(Boolean).join('; ');
+  if(!m)
+    return;
+
+  const word = m[2];
+  const py = m[3].replace(/u:/g,'ü').trim();
+
+  if(/[\u3400-\u9fff]/.test(word) && py){
+
+    const meaning =
+      m[4]
+      .split('/')
+      .filter(Boolean)
+      .join('; ');
+
     wordDict.set(word,py);
     wordMeanings.set(word,meaning);
     indexWord(word,py,meaning);
 
-    const chars=[...word], syllables=py.split(/\s+/);
+    const chars = [...word];
+    const syllables = py.split(/\s+/);
+
     chars.forEach((ch,i)=>{
-      if(/[\u3400-\u9fff]/.test(ch)&&syllables[i]&&!charDict[ch])
-        charDict[ch]=syllables[i]
+      if(
+        /[\u3400-\u9fff]/.test(ch) &&
+        syllables[i] &&
+        !charDict[ch]
+      ){
+        charDict[ch] = syllables[i];
+      }
     });
   }
 }
 
 async function loadComprehensiveDictionary(){
+
   try{
-    const response=await fetch(CEDICT_URL,{cache:'default'});
-    if(!response.ok)throw new Error('Dictionary request failed');
 
-    const reader=response.body?.getReader();
-    if(!reader)throw new Error('Streaming is unavailable');
+    const response =
+      await fetch(CEDICT_URL,{cache:'default'});
 
-    const decoder=new TextDecoder();
-    let buffer='',lines=[],count=0;
+    if(!response.ok)
+      throw new Error('Dictionary request failed');
 
-    const processBatch=()=>new Promise(resolve=>{
-      const run=()=>{
-        const end=Math.min(lines.length,1200);
+    const reader =
+      response.body?.getReader();
+
+    if(!reader)
+      throw new Error('Streaming is unavailable');
+
+    const decoder = new TextDecoder();
+
+    let buffer = '';
+    let lines = [];
+    let count = 0;
+
+    const processBatch = () => new Promise(resolve=>{
+
+      const run = () => {
+
+        const end =
+          Math.min(lines.length,1200);
 
         for(let i=0;i<end;i++){
           addCedictLine(lines[i]);
@@ -117,7 +330,9 @@ async function loadComprehensiveDictionary(){
         }
 
         lines.splice(0,end);
-        dictionaryStatus=`Loading pronunciation dictionary… ${wordDict.size.toLocaleString()} words`;
+
+        dictionaryStatus =
+          `Loading pronunciation dictionary… ${wordDict.size.toLocaleString()} words`;
 
         if(lines.length){
           requestAnimationFrame(run);
@@ -126,64 +341,111 @@ async function loadComprehensiveDictionary(){
         }
       };
 
-      requestAnimationFrame(run)
+      requestAnimationFrame(run);
     });
 
     while(true){
-      const {value,done}=await reader.read();
-      if(done)break;
 
-      buffer+=decoder.decode(value,{stream:true});
-      const parts=buffer.split('\n');
-      buffer=parts.pop()||'';
+      const {value,done} =
+        await reader.read();
+
+      if(done)
+        break;
+
+      buffer +=
+        decoder.decode(value,{stream:true});
+
+      const parts =
+        buffer.split('\n');
+
+      buffer =
+        parts.pop() || '';
+
       lines.push(...parts);
 
-      if(lines.length>=1200){
+      if(lines.length >= 1200){
+
         await processBatch();
-        document.getElementById('dictionaryStatus').textContent=dictionaryStatus;
+
+        document.getElementById(
+          'dictionaryStatus'
+        ).textContent =
+          dictionaryStatus;
       }
     }
 
-    buffer+=decoder.decode();
+    buffer += decoder.decode();
 
-    if(buffer)lines.push(buffer);
-    if(lines.length)await processBatch();
+    if(buffer)
+      lines.push(buffer);
 
-    dictionaryStatus=`Comprehensive dictionary loaded (${wordDict.size.toLocaleString()} words).`;
-    document.getElementById('dictionaryStatus').textContent=dictionaryStatus;
+    if(lines.length)
+      await processBatch();
+
+    dictionaryStatus =
+      `Comprehensive dictionary loaded (${wordDict.size.toLocaleString()} words).`;
+
+    document.getElementById(
+      'dictionaryStatus'
+    ).textContent =
+      dictionaryStatus;
+
     render();
 
   }catch(e){
-    dictionaryStatus='Using built-in dictionary; online dictionary unavailable.';
-    document.getElementById('dictionaryStatus').textContent=dictionaryStatus;
+
+    dictionaryStatus =
+      'Using built-in dictionary; online dictionary unavailable.';
+
+    document.getElementById(
+      'dictionaryStatus'
+    ).textContent =
+      dictionaryStatus;
+
     render();
   }
 }
 
 loadComprehensiveDictionary();
 
-const editor=document.getElementById('editor'),
-      pinyin=document.getElementById('pinyin'),
-      status=document.getElementById('status');
+const editor =
+  document.getElementById('editor');
+
+const pinyin =
+  document.getElementById('pinyin');
+
+const status =
+  document.getElementById('status');
 
 function isHan(c){
-  return /[\u3400-\u9fff]/.test(c)
+  return /[\u3400-\u9fff]/.test(c);
 }
 
 function toneClass(py){
-  let m=py&&py.match(/[1-4]/);
-  return m?'tone'+m[0]:'neutral'
+
+  let m =
+    py && py.match(/[1-4]/);
+
+  return m
+    ? 'tone'+m[0]
+    : 'neutral';
 }
 
 function toneMarked(py){
-  if(!py)return '';
 
-  const tone=(py.match(/[1-4]/)||['5'])[0];
-  const base=py.replace(/[1-5]$/,'').toLowerCase();
+  if(!py)
+    return '';
 
-  if(tone==='5')return base;
+  const tone =
+    (py.match(/[1-4]/)||['5'])[0];
 
-  const marks={
+  const base =
+    py.replace(/[1-5]$/,'').toLowerCase();
+
+  if(tone==='5')
+    return base;
+
+  const marks = {
     a:['ā','á','ǎ','à'],
     e:['ē','é','ě','è'],
     i:['ī','í','ǐ','ì'],
@@ -192,176 +454,288 @@ function toneMarked(py){
     'ü':['ǖ','ǘ','ǚ','ǜ']
   };
 
-  let vowel=-1;
+  let vowel = -1;
 
-  for(const v of ['a','e','i','o','u','ü']){
-    const p=base.indexOf(v);
+  for(const v of ['a','e','o','i','u','ü']){
+
+    const p =
+      base.indexOf(v);
 
     if(p>=0){
+
       if(v==='a'||v==='e'){
-        vowel=p;
-        break
+        vowel = p;
+        break;
       }
 
       if(base.includes('ou'))
-        vowel=base.indexOf('o');
+        vowel = base.indexOf('o');
       else
-        vowel=p
+        vowel = p;
     }
   }
 
   return vowel<0
-    ?base
-    :base.slice(0,vowel)+marks[base[vowel]][Number(tone)-1]+base.slice(vowel+1)
+    ? base
+    : base.slice(0,vowel) +
+      marks[base[vowel]][Number(tone)-1] +
+      base.slice(vowel+1);
 }
 
 function toneForChar(c,text,i){
-  let node=wordTrie,best=null;
+
+  let node = wordTrie;
+  let best = null;
 
   for(let j=i;j<text.length;j++){
-    node=node[text[j]];
 
-    if(!node)break;
+    node =
+      node[text[j]];
 
-    if(node.$&&j>i)
-      best={
+    if(!node)
+      break;
+
+    if(node.$ && j>i){
+
+      best = {
         py:node.$,
         length:j-i+1,
         meaning:node.$$||''
       };
+    }
   }
 
-  if(best)return best;
+  if(best)
+    return best;
 
-  const py=dict[c]||charDict[c];
+  const py =
+    dict[c] || charDict[c];
 
   return py
-    ?{py:[py],length:1,meaning:''}
-    :null;
+    ? {
+        py:[py],
+        length:1,
+        meaning:''
+      }
+    : null;
 }
 
 function escape(s){
-  return s.replace(/[&<>"']/g,m=>({
-    '&':'&amp;',
-    '<':'&lt;',
-    '>':'&gt;',
-    '"':'&quot;',
-    "'":'&#39;'
-  }[m]))
+
+  return s.replace(
+    /[&<>"']/g,
+    m=>({
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      '"':'&quot;',
+      "'":'&#39;'
+    }[m])
+  );
 }
 
 function render(){
-  const text=editor.innerText.replace(/\n/g,'');
-  let html='',pys=[];
+
+  const text =
+    editor.innerText.replace(/\n/g,'');
+
+  let html = '';
+  let pys = [];
 
   for(let i=0;i<text.length;){
-    const found=toneForChar(text[i],text,i);
 
-    if(found&&found.length>1){
-      const word=text.slice(i,i+found.length),
-            meaning=found.meaning||'';
+    const found =
+      toneForChar(text[i],text,i);
 
-      html+='<span class="word-hover" title="'+
+    if(found && found.length>1){
+
+      const word =
+        text.slice(
+          i,
+          i+found.length
+        );
+
+      const meaning =
+        found.meaning || '';
+
+      html +=
+        '<span class="word-hover" title="' +
         escape(
-          found.py.map(toneMarked).join(' ')+
-          (meaning?' — '+meaning:'')
-        )+
+          found.py
+            .map(toneMarked)
+            .join(' ') +
+          (meaning
+            ? ' — '+meaning
+            : '')
+        ) +
         '">';
 
       for(let j=0;j<found.py.length;j++){
-        const ch=text[i+j];
 
-        html+='<span class="'+
-          toneClass(found.py[j])+
-          '">'+
-          escape(ch)+
+        const ch =
+          text[i+j];
+
+        html +=
+          '<span class="' +
+          toneClass(found.py[j]) +
+          '" data-py="' +
+          escape(found.py[j]) +
+          '">' +
+          escape(ch) +
           '</span>';
 
-        pys.push(found.py[j])
+        pys.push(
+          found.py[j]
+        );
       }
 
-      html+='</span>';
-      i+=found.length;
+      html += '</span>';
+
+      i += found.length;
 
     }else{
-      const c=text[i],
-            py=found?found.py[0]:null,
-            meaning=wordMeanings.get(c)||'';
 
-      html+=isHan(c)
-        ?'<span class="'+toneClass(py)+' word-hover" title="'+
+      const c = text[i];
+
+      const py =
+        found
+          ? found.py[0]
+          : null;
+
+      const meaning =
+        wordMeanings.get(c)||'';
+
+      html +=
+        isHan(c)
+
+        ? '<span class="' +
+          toneClass(py) +
+          ' word-hover" data-py="' +
+          (py
+            ? escape(py)
+            : '') +
+          '" title="' +
           (
             py
-              ?escape(toneMarked(py))+
-                (meaning?' — '+escape(meaning):'')
-              :'unknown pronunciation'
-          )+
-          '">'+
-          escape(c)+
+              ? escape(toneMarked(py)) +
+                (
+                  meaning
+                    ? ' — '+escape(meaning)
+                    : ''
+                )
+              : 'unknown pronunciation'
+          ) +
+          '">' +
+          escape(c) +
           '</span>'
-        :escape(c);
 
-      if(py)pys.push(py);
+        : escape(c);
+
+      if(py)
+        pys.push(py);
+
       i++;
     }
   }
 
-  const sel=window.getSelection(),
-        active=document.activeElement===editor;
+  const sel =
+    window.getSelection();
 
-  let caret=0;
+  const active =
+    document.activeElement === editor;
 
-  if(active&&sel.rangeCount){
-    const range=sel.getRangeAt(0),
-          before=range.cloneRange();
+  let caret = 0;
 
-    before.selectNodeContents(editor);
-    before.setEnd(range.startContainer,range.startOffset);
-    caret=before.toString().length
-  }
+  if(active && sel.rangeCount){
 
-  editor.innerHTML=html;
+    const range =
+      sel.getRangeAt(0);
 
-  if(active){
-    const walker=document.createTreeWalker(
-      editor,
-      NodeFilter.SHOW_TEXT
+    const before =
+      range.cloneRange();
+
+    before.selectNodeContents(
+      editor
     );
 
-    let node,seen=0;
+    before.setEnd(
+      range.startContainer,
+      range.startOffset
+    );
+
+    caret =
+      before.toString().length;
+  }
+
+  editor.innerHTML =
+    html;
+
+  if(active){
+
+    const walker =
+      document.createTreeWalker(
+        editor,
+        NodeFilter.SHOW_TEXT
+      );
+
+    let node;
+    let seen = 0;
 
     while(node=walker.nextNode()){
-      if(seen+node.nodeValue.length>=caret){
-        const r=document.createRange();
+
+      if(
+        seen +
+        node.nodeValue.length
+        >= caret
+      ){
+
+        const r =
+          document.createRange();
 
         r.setStart(
           node,
-          Math.max(0,caret-seen)
+          Math.max(
+            0,
+            caret-seen
+          )
         );
 
         r.collapse(true);
+
         sel.removeAllRanges();
+
         sel.addRange(r);
-        break
+
+        break;
       }
 
-      seen+=node.nodeValue.length
+      seen +=
+        node.nodeValue.length;
     }
   }
 
-  pinyin.innerHTML=pys.map(py=>
-    '<span class="'+toneClass(py)+'">'+
-    escape(toneMarked(py))+
-    '</span>'
-  ).join('');
+  pinyin.innerHTML =
+    pys.map(py=>
+      '<span class="' +
+      toneClass(py) +
+      '">' +
+      escape(
+        toneMarked(py)
+      ) +
+      '</span>'
+    ).join('');
 
-  status.textContent=
-    [...text].length+
-    ' character'+
-    ([...text].length===1?'':'s');
+  status.textContent =
+    [...text].length +
+    ' character' +
+    (
+      [...text].length===1
+        ? ''
+        : 's'
+    );
 }
 
-let composing=false;
+let composing = false;
 
 editor.addEventListener(
   'compositionstart',
@@ -372,7 +746,7 @@ editor.addEventListener(
   'compositionend',
   ()=>{
     composing=false;
-    render()
+    render();
   }
 );
 
@@ -380,119 +754,179 @@ editor.addEventListener(
   'input',
   ()=>{
     if(!composing){
+
       localStorage.setItem(
         'toneWriterDraft',
         editor.innerText
       );
 
-      render()
+      render();
     }
   }
 );
 
-document.getElementById('clear').onclick=()=>{
-  editor.innerHTML='';
-  localStorage.removeItem('toneWriterDraft');
+document.getElementById(
+  'clear'
+).onclick = ()=>{
+
+  editor.innerHTML = '';
+
+  localStorage.removeItem(
+    'toneWriterDraft'
+  );
+
   editor.focus();
-  render()
+
+  render();
 };
 
-document.getElementById('copy').onclick=async()=>{
-  await navigator.clipboard?.writeText(editor.innerText);
-  alert('Plain text copied to your clipboard.')
+document.getElementById(
+  'copy'
+).onclick = async ()=>{
+
+  await navigator.clipboard?.writeText(
+    editor.innerText
+  );
+
+  alert(
+    'Plain text copied to your clipboard.'
+  );
 };
 
-document.getElementById('translate').onclick=async()=>{
-  const box=document.getElementById('translation'),
-        text=editor.innerText.trim();
+document.getElementById(
+  'translate'
+).onclick = async ()=>{
+
+  const box =
+    document.getElementById(
+      'translation'
+    );
+
+  const text =
+    editor.innerText.trim();
 
   if(!text){
-    box.hidden=true;
-    return
+
+    box.hidden = true;
+
+    return;
   }
 
   if(!box.hidden){
-    box.hidden=true;
-    return
+
+    box.hidden = true;
+
+    return;
   }
 
-  box.hidden=false;
-  box.textContent='Translating…';
+  box.hidden = false;
+
+  box.textContent =
+    'Translating…';
 
   try{
-    const url=
-      'https://api.mymemory.translated.net/get?q='+
-      encodeURIComponent(text)+
+
+    const url =
+      'https://api.mymemory.translated.net/get?q=' +
+      encodeURIComponent(text) +
       '&langpair=zh-CN|en';
 
-    const r=await fetch(url);
+    const r =
+      await fetch(url);
 
-    if(!r.ok)throw new Error();
+    if(!r.ok)
+      throw new Error();
 
-    const data=await r.json();
-    const result=data?.responseData?.translatedText;
+    const data =
+      await r.json();
 
-    if(!result)throw new Error();
+    const result =
+      data?.responseData?.translatedText;
 
-    box.textContent=result;
+    if(!result)
+      throw new Error();
+
+    box.textContent =
+      result;
 
   }catch(e){
-    box.textContent=
-      'Translation unavailable right now. Please check your internet connection.'
+
+    box.textContent =
+      'Translation unavailable right now. Please check your internet connection.';
   }
 };
 
-document.getElementById('plain').onclick=()=>{
-  const spans=editor.querySelectorAll('span');
-  const colored=
-    spans.length&&
-    spans[0].className!=='neutral';
+document.getElementById(
+  'plain'
+).onclick = ()=>{
 
-  spans.forEach(s=>
-    s.className=
-      colored
-        ?'neutral'
-        :toneClass(s.title)
-  )
+  editor.classList.toggle(
+    'no-colors'
+  );
 };
 
-document.getElementById('save').onclick=()=>{
+document.getElementById(
+  'save'
+).onclick = ()=>{
+
   localStorage.setItem(
     'toneWriterSaved',
     editor.innerText
   );
 
-  alert('Note saved on this device.')
+  alert(
+    'Note saved on this device.'
+  );
 };
 
-document.getElementById('restore').onclick=()=>{
-  editor.textContent=
-    localStorage.getItem('toneWriterSaved')||'';
+document.getElementById(
+  'restore'
+).onclick = ()=>{
 
-  render()
+  editor.textContent =
+    localStorage.getItem(
+      'toneWriterSaved'
+    ) || '';
+
+  render();
 };
 
-document.getElementById('size').oninput=e=>{
-  editor.style.fontSize=e.target.value+'px';
+document.getElementById(
+  'size'
+).oninput = e=>{
+
+  editor.style.fontSize =
+    e.target.value+'px';
 
   localStorage.setItem(
     'toneWriterSize',
     e.target.value
-  )
+  );
 };
 
-const draft=
-  localStorage.getItem('toneWriterDraft');
+const draft =
+  localStorage.getItem(
+    'toneWriterDraft'
+  );
 
 if(draft)
-  editor.textContent=draft;
+  editor.textContent =
+    draft;
 
-const savedSize=
-  localStorage.getItem('toneWriterSize');
+const savedSize =
+  localStorage.getItem(
+    'toneWriterSize'
+  );
 
 if(savedSize){
-  document.getElementById('size').value=savedSize;
-  editor.style.fontSize=savedSize+'px'
+
+  document.getElementById(
+    'size'
+  ).value =
+    savedSize;
+
+  editor.style.fontSize =
+    savedSize+'px';
 }
 
 render();
@@ -502,22 +936,36 @@ let deferredPrompt;
 window.addEventListener(
   'beforeinstallprompt',
   e=>{
+
     e.preventDefault();
-    deferredPrompt=e;
-    document.getElementById('install').hidden=false
+
+    deferredPrompt = e;
+
+    document.getElementById(
+      'install'
+    ).hidden = false;
   }
 );
 
-document.getElementById('install').onclick=async()=>{
+document.getElementById(
+  'install'
+).onclick = async ()=>{
+
   if(deferredPrompt){
+
     deferredPrompt.prompt();
+
     await deferredPrompt.userChoice;
-    deferredPrompt=null;
-    document.getElementById('install').hidden=true
+
+    deferredPrompt = null;
+
+    document.getElementById(
+      'install'
+    ).hidden = true;
   }
 };
 
-const manifest={
+const manifest = {
   name:'Mandarin Tone Writer',
   short_name:'Tone Writer',
   start_url:'.',
@@ -526,13 +974,19 @@ const manifest={
   theme_color:'#7467f5'
 };
 
-const link=document.createElement('link');
-link.rel='manifest';
-link.href=
-  'data:application/manifest+json,'+
-  encodeURIComponent(JSON.stringify(manifest));
+const link =
+  document.createElement('link');
+
+link.rel = 'manifest';
+
+link.href =
+  'data:application/manifest+json,' +
+  encodeURIComponent(
+    JSON.stringify(manifest)
+  );
 
 document.head.appendChild(link);
+
 </script>
 </body>
 </html>
