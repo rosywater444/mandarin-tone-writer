@@ -58,27 +58,38 @@ button:hover { background:light-dark(#eeeef4,#2c2f3a); }
 const dict = {'我':'wo3','你':'ni3','他':'ta1','她':'ta1','它':'ta1','们':'men5','是':'shi4','不':'bu4','也':'ye3','很':'hen3','好':'hao3','吗':'ma5','呢':'ne5','啊':'a5','喜':'xi3','欢':'huan1','学':'xue2','习':'xi2','中':'zhong1','文':'wen2','说':'shuo1','听':'ting1','看':'kan4','读':'du2','写':'xie3','吃':'chi1','喝':'he1','水':'shui3','饭':'fan4','菜':'cai4','苹':'ping2','果':'guo3','葡':'pu2','萄':'tao2','家':'jia1','校':'xiao4','书':'shu1','店':'dian4','图':'tu2','馆':'guan3','今':'jin1','天':'tian1','昨':'zuo2','明':'ming2','早':'zao3','上':'shang4','午':'wu3','晚':'wan3','时':'shi2','候':'hou4','点':'dian3','去':'qu4','来':'lai2','在':'zai4','从':'cong2','到':'dao4','跟':'gen1','和':'he2','一':'yi1','起':'qi3','朋':'peng2','友':'you3','妈':'ma1','哥':'ge1','姐':'jie3','妹':'mei4','人':'ren2','新':'xin1','住':'zhu4','班':'ban1','工':'gong1','作':'zuo4','公':'gong1','司':'si1','宿':'su4','舍':'she4','房':'fang2','间':'jian1','手':'shou3','机':'ji1','买':'mai3','钱':'qian2','爱':'ai4','想':'xiang3','要':'yao4','会':'hui4','可':'ke3','以':'yi3','用':'yong4','给':'gei3','送':'song4','等':'deng3','知':'zhi1','道':'dao4','什':'shen2','么':'me5','哪':'na3','儿':'er2','这':'zhe4','里':'li3','那':'na4','边':'bian1','累':'lei4','冷':'leng3','热':'re4','漂':'piao4','亮':'liang4','大':'da4','小':'xiao3','多':'duo1','少':'shao3','慢':'man4','快':'kuai4','高':'gao1','强':'qiang2','帅':'shuai4','酷':'ku4','北':'bei3','京':'jing1','海':'hai3','路':'lu4','商':'shang1','场':'chang3','南':'nan2','动':'dong4','物':'wu4','园':'yuan2','自':'zi4','然':'ran2','历':'li4','史':'shi3','科':'ke1','技':'ji4','跑':'pao3','步':'bu4','打':'da3','篮':'lan2','球':'qiu2','骑':'qi2','马':'ma3','走':'zou3','坐':'zuo4','睡':'shui4','画':'hua4','音':'yin1','乐':'le4','聊':'liao2','转':'zhuan3','发':'fa1','课':'ke4','周':'zhou1','末':'mo4','平':'ping2','常':'chang2','电':'dian4','脑':'nao3','飞':'fei1','机':'ji1','行':'xing2','员':'yuan2','开':'kai1','保':'bao3','护':'hu4','弟':'di4','有':'you3','没':'mei2','五':'wu3','三':'san1','两':'liang3','十':'shi2','几':'ji3','号':'hao4','名':'ming2','字':'zi4','生':'sheng1','日':'ri4','婚':'hun1','礼':'li3'};
 const phrases = {'我喜欢':'wo3 xi3 huan1','学习中文':'xue2 xi2 zhong1 wen2','图书馆':'tu2 shu1 guan3','今天':'jin1 tian1','昨天':'zuo2 tian1','明天':'ming2 tian1','朋友':'peng2 you3','苹果':'ping2 guo3','葡萄':'pu2 tao2','商场':'shang1 chang3','南京路':'nan2 jing1 lu4','一起':'yi1 qi3','怎么':'zen3 me5','什么':'shen2 me5','哪里':'na3 li3','哪儿':'na3 er2','可以':'ke3 yi3','喜欢':'xi3 huan1','爱好':'ai4 hao4','生日':'sheng1 ri4','什么时候':'shen2 me5 shi2 hou4','婚礼':'hun1 li3','给我':'gei3 wo3','在家':'zai4 jia1','上班':'shang4 ban1','工作':'gong1 zuo4','吃饭':'chi1 fan4','喝水':'he1 shui3','走路':'zou3 lu4','打篮球':'da3 lan2 qiu2','跑步':'pao3 bu4'};
 const CEDICT_URL='https://raw.githubusercontent.com/rhcarvalho/cedict/master/cedict_1_0_ts_utf-8_mdbg.txt';
-let wordDict=new Map(Object.entries(phrases)), dictionaryStatus='Loading comprehensive dictionary…';
+let wordDict=new Map(Object.entries(phrases)), wordTrie={}, dictionaryStatus='Loading comprehensive dictionary…';
 const charDict={};
+function indexWord(word,py){let node=wordTrie;for(const ch of word){node=node[ch]||(node[ch]={})}node.$=[...py.split(/\s+/)]}
+for(const [word,py] of wordDict)indexWord(word,py);
 function addCedictLine(line){
   const m=line.match(/^([^\s]+) ([^\s]+) \[([^\]]+)\]/); if(!m)return;
   const word=m[2], py=m[3].replace(/u:/g,'ü').trim();
   if(/[\u3400-\u9fff]/.test(word)&&py){
-    wordDict.set(word,py);
+    wordDict.set(word,py); indexWord(word,py);
     const chars=[...word], syllables=py.split(/\s+/);
     chars.forEach((ch,i)=>{if(/[\u3400-\u9fff]/.test(ch)&&syllables[i]&&!charDict[ch])charDict[ch]=syllables[i]});
   }
 }
 async function loadComprehensiveDictionary(){
   try{
-    const cached=localStorage.getItem('toneWriterCedict');
-    if(cached){JSON.parse(cached).forEach(([w,p])=>addCedictLine(`${w} ${w} [${p}]`));dictionaryStatus='Comprehensive dictionary loaded from this device.';render();}
-    const response=await fetch(CEDICT_URL,{cache:'no-store'}); if(!response.ok)throw new Error('Dictionary request failed');
-    const text=await response.text(); const entries=[];
-    for(const line of text.split('\n')){const before=wordDict.size;addCedictLine(line);if(wordDict.size>before){const last=[...wordDict.entries()].pop();entries.push(last)}}
-    try{localStorage.setItem('toneWriterCedict',JSON.stringify(entries))}catch(e){}
-    dictionaryStatus=`Comprehensive dictionary loaded (${wordDict.size.toLocaleString()} words).`;render();
-  }catch(e){dictionaryStatus='Using built-in dictionary; online dictionary unavailable.';render()}
+    const response=await fetch(CEDICT_URL,{cache:'default'}); if(!response.ok)throw new Error('Dictionary request failed');
+    const reader=response.body?.getReader();
+    if(!reader)throw new Error('Streaming is unavailable');
+    const decoder=new TextDecoder(); let buffer='',lines=[],count=0;
+    const processBatch=()=>new Promise(resolve=>{
+      const run=()=>{const end=Math.min(lines.length,1200);for(let i=0;i<end;i++){addCedictLine(lines[i]);count++}lines.splice(0,end);dictionaryStatus=`Loading pronunciation dictionary… ${wordDict.size.toLocaleString()} words`;if(lines.length){requestAnimationFrame(run)}else resolve()};requestAnimationFrame(run)
+    });
+    while(true){
+      const {value,done}=await reader.read();
+      if(done)break;
+      buffer+=decoder.decode(value,{stream:true});
+      const parts=buffer.split('\n'); buffer=parts.pop()||''; lines.push(...parts);
+      if(lines.length>=1200){await processBatch();document.getElementById('dictionaryStatus').textContent=dictionaryStatus}
+    }
+    buffer+=decoder.decode(); if(buffer)lines.push(buffer); if(lines.length)await processBatch();
+    dictionaryStatus=`Comprehensive dictionary loaded (${wordDict.size.toLocaleString()} words).`;document.getElementById('dictionaryStatus').textContent=dictionaryStatus;render();
+  }catch(e){dictionaryStatus='Using built-in dictionary; online dictionary unavailable.';document.getElementById('dictionaryStatus').textContent=dictionaryStatus;render()}
 }
 loadComprehensiveDictionary();
 const editor=document.getElementById('editor'), pinyin=document.getElementById('pinyin'), status=document.getElementById('status');
@@ -88,9 +99,12 @@ function toneForChar(c, text, i){
   // Prefer the longest dictionary word beginning at this position. This resolves
   // many polyphonic characters from their surrounding word instead of guessing
   // from the character alone.
-  let best=null;
-  for(const [word,py] of wordDict){if(word.length>1&&text.startsWith(word,i)&&(!best||word.length>best.word.length))best={word,py}}
-  if(best)return best.py.split(/\s+/);
+  let node=wordTrie,best=null;
+  for(let j=i;j<text.length;j++){
+    node=node[text[j]]; if(!node)break;
+    if(node.$&&j>i)best=node.$;
+  }
+  if(best)return best;
   const py=dict[c]||charDict[c]; return py?[py]:null;
 }
 function escape(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
